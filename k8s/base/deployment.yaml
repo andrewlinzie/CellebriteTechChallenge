@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evidence-api
+  labels:
+    app: evidence-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: evidence-api
+  template:
+    metadata:
+      labels:
+        app: evidence-api
+    spec:
+      containers:
+        - name: evidence-api
+          image: 899631475351.dkr.ecr.us-east-2.amazonaws.com/evidence-api:20260224130831
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
