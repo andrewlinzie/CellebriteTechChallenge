@@ -1,0 +1,50 @@
+name: cd-update-manifest-for-argocd
+
+on:
+  workflow_run:
+    workflows: ["ci-build-push-ecr"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  update-manifest:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo at main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.REPO_PUSH_TOKEN }}
+
+      - name: Update image tag in k8s manifest
+        run: |
+          set -euo pipefail
+          IMAGE_REPO="899631475351.dkr.ecr.us-east-2.amazonaws.com/evidence-api"
+          NEW_TAG="${{ github.event.workflow_run.head_sha }}"
+          FILE="k8s/base/deployment.yaml"
+
+          echo "Updating $FILE to use $IMAGE_REPO:$NEW_TAG"
+          sed -i -E "s#(image:[[:space:]]*$IMAGE_REPO:).*#\1$NEW_TAG#g" "$FILE"
+
+          echo "Result:"
+          grep -n "image:" "$FILE"
+
+      - name: Commit and push manifest change
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+
+          git add k8s/base/deployment.yaml
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore(cd): deploy image ${{ github.event.workflow_run.head_sha }}"
+          git push origin main
