@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: evidence-api
-          image: 899631475351.dkr.ecr.us-east-2.amazonaws.com/evidence-api:c624898a03e0e41912d4971f6367296a73bf8b05
+          image: 899631475351.dkr.ecr.us-east-2.amazonaws.com/evidence-api:922600dc54b98a7312155c1e64dd2b9c4c32cb56
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
